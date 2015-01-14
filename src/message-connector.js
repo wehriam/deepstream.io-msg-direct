@@ -3,27 +3,32 @@ var events = require( 'events' ),
 	pckg = require( '../package.json' );
 
 /**
- * MessageConnectors allow deepstream instances to communicate with each other.
- *
- * Messaging uses a publish-subscribe pattern. A publisher can broadcast
- * a message on a topic that zero or more subscribers listen to
- *
- * Some things that might be worth taking into account when building a new message connector
- *
- * - Deepstream only uses a relatively small number of topics (record, rpc and event plus a private topic),
- *   but will send and receive large numbers of messages on each of them. If this leads to performance problems
- *   it might make sense for the message connector to do some custom sub-routing, e.g. based on record namespaces etc.
- *
- * - Messages are passed to publish() as javascript objects and expected to be returned
- *   by the receiver as such. So its up to the message connector to serialize and deserialize them, e.g. as JSON or MsgPack
- *
- * - The message connector acts as both publisher and subscriber for each topic. It should however not receive its
- *   own messages. Some messaging middleware supports this, but for others it might be necessary to add an unique
- *   sender-id to outgoing messages and filter out incoming messages that have the same id
- *
- * - Messaging is the backbone of deepstreams scaling / clustering capabilites. So this needs to be reliable... and fast!
+ * This message connector connects deepstream nodes directly with each other over tcp.
+ * 
+ * The upsides of using direct connections rather than a message brokers are increaded
+ * speed and one less system that needs to be maintained.
+ * 
+ * This however is offset by a lack of scalability - each server needs to connect to each other server,
+ * so you end up with an exponential number of connections - and high maintenance every server needs
+ * to know every other server's URL. This could however be automated.
+ * 
+ * Monitoring can also be quite tricky due to the large number of connections.
+ * 
+ * So basically, for smaller clusters of 3-4 nodes that need to communicate with low latency this
+ * might be a good choice. For larger clusters though it make make more sense to use an AMQP broker
+ * or Apache Kafka as a messaging backbone.
+ * 
+ * This class also exposes a addUrl( url ) method to allow to connect to new servers at runtime
  * 
  * @param {Object} config Connection configuration.
+ * 
+ * {
+ *     localhost: <String> e.g. 0.0.0.0
+ *     localport: <Number> e.g. 6024
+ *     remoteUrls: <Array> e.g. [ '192.168.0.12:6024', 'mydomain:6024' ]
+ *     reconnectInterval: <Number> e.g. 2000  // time between reconnection attempts in ms
+ *     maxReconnectAttepts: <Number> e.g. 10 // number of attempts after a remote server is assumed dead
+ * }
  *
  * @constructor
  */
@@ -93,5 +98,7 @@ MessageConnector.prototype.subscribe = function( topic, callback ) {
 MessageConnector.prototype.publish = function( topic, message ) {
 	
 };
+
+MessageConnector.prototype.addUrl
 
 module.exports = MessageConnector;
