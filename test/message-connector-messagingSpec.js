@@ -21,11 +21,15 @@ describe( 'Messages are send between multiple instances', function(){
 	it( 'creates connectorA', function( done ){
 		connectorA = new MessageConnector( getSettings( 2001, 2002, 2003 ) );
 		expect( connectorA.isReady ).toBe( false );
-		connectorA.on( 'ready', done );
-		connectorA.on( 'error', function( e ){ throw e; });
+		connectorA.on( 'ready', function(){
+			done();
+			console.log( 'done called' );
+		} );
+		connectorA.on( 'error', function( e ){console.log( e ); throw e; });
 	});
 	
 	it( 'creates connectorB', function( done ) {
+		console.log( 'next step' );
 	    connectorB = new MessageConnector( getSettings( 2002, 2001, 2003 ) );
 	    expect( connectorB.isReady ).toBe( false );
 		connectorB.on( 'ready', done );

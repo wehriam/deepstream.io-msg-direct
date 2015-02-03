@@ -1,7 +1,8 @@
 var events = require( 'events' ),
 	util = require( 'util' ),
 	net = require( 'net' ),
-	Connection = require( './connection' ),
+	IncomingConnection = require( './incoming-connection' ),
+	OutgoingConnection = require( './outgoing-connection' ),
 	pckg = require( '../package.json' ),
 	TOPIC_SEPERATOR = String.fromCharCode( 29 ),
 	SUBSCRIBE = '__S',
@@ -44,6 +45,8 @@ var MessageConnector = function( config ) {
 	this.name = pckg.name;
 	this.version = pckg.version;
 	
+	this._emitter = new events.EventEmitter();
+	
 	this._config = config;
 	this._checkConfig();
 	this._config.reconnectInterval = this._config.reconnectInterval || 2000;
@@ -59,7 +62,9 @@ var MessageConnector = function( config ) {
 util.inherits( MessageConnector, events.EventEmitter );
 
 MessageConnector.prototype.addPeer = function( url ) {
-	this._addConnection( new Connection( url, this._config ) );
+	if( !this._isConnectedTo( url ) ) {
+		this._addConnection( new OutgoingConnection( url, this._config ) );
+	}
 };
 
 MessageConnector.prototype.removePeer = function( url ) {
@@ -82,8 +87,11 @@ MessageConnector.prototype.removePeer = function( url ) {
  * @returns {void}
  */
 MessageConnector.prototype.unsubscribe = function( topic, callback ) {
-	this.publish( UNSUBSCRIBE, topic );
-	process.nextTick( callback );
+	this._emitter.removeListener( topic, callback );
+		
+	if( this._emitter.listeners( topic ).length === 0 ) {
+		this.publish( UNSUBSCRIBE, topic );
+	}
 };
 
 /**
@@ -100,8 +108,11 @@ MessageConnector.prototype.unsubscribe = function( topic, callback ) {
  * @returns {void}
  */
 MessageConnector.prototype.subscribe = function( topic, callback ) {
-	this.publish( SUBSCRIBE, topic );
-	process.nextTick( callback );
+	if( this._emitter.listeners( topic ).length === 0 ) {
+		this.publish( SUBSCRIBE, topic );
+	}
+	
+	this._emitter.addListener( topic, callback );
 };
 
 /**
@@ -131,6 +142,17 @@ MessageConnector.prototype.publish = function( topic, message ) {
 	}
 };
 
+MessageConnector.prototype._isConnectedTo = function( url ) {
+	for( var i = 0; i < this._connections.length; i++ ) {
+		console.log( this._connections[ i ].getRemoteUrl() );
+		if( this._connections[ i ].getRemoteUrl() === url ) {
+			return true;
+		}
+	}
+	
+	return false;
+};
+
 MessageConnector.prototype._checkConfig = function() {
 	if( typeof this._config.localhost !== 'string' ) {
 		throw new Error( 'Missing parameter \'localhost\'' );
@@ -146,7 +168,10 @@ MessageConnector.prototype._checkConfig = function() {
 };
 
 MessageConnector.prototype._onIncomingConnection = function( socket ) {
-	this._addConnection( new Connection( socket, this._config ) );
+	if( !this._isConnectedTo( socket.remoteAddress + ':' + socket.remotePort ) ) {
+		
+	}
+	this._addConnection( new IncomingConnection( socket, this._config ) );
 };
 
 MessageConnector.prototype._addConnection = function( connection ) {
@@ -166,6 +191,7 @@ MessageConnector.prototype._removeConnection = function( connection ) {
 };
 
 MessageConnector.prototype._onConnectionError = function( connection, errorMsg ) {
+	console.log( 'Direct connection ' + connection.getRemoteUrl() + ' ' + errorMsg );
 	this.emit( 'error', 'Direct connection ' + connection.getRemoteUrl() + ' ' + errorMsg );
 }
 
