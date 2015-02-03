@@ -1,24 +1,31 @@
 var events = require( 'events' ),
 	util = require( 'util' ),
-	pckg = require( '../package.json' );
+	net = require( 'net' ),
+	Connection = require( './connection' ),
+	pckg = require( '../package.json' ),
+	TOPIC_SEPERATOR = String.fromCharCode( 29 ),
+	SUBSCRIBE = '__S',
+	UNSUBSCRIBE = '__U';
 
 /**
- * This message connector connects deepstream nodes directly with each other over tcp.
+ * This message connector connects deepstream nodes directly with each other via tcp.
  * 
- * The upsides of using direct connections rather than a message brokers are increaded
- * speed and one less system that needs to be maintained.
+ * The upsides of using direct connections rather than a message broker are increased
+ * speed and - of course - one less system that needs to be maintained.
  * 
- * This however is offset by a lack of scalability - each server needs to connect to each other server,
- * so you end up with an exponential number of connections - and high maintenance every server needs
+ * This however is offset by a lack of scalability since each server needs to connect to each other server,
+ * so you end up with an exponential number of connections as well as higher maintenance since every server needs
  * to know every other server's URL. This could however be automated.
  * 
  * Monitoring can also be quite tricky due to the large number of connections.
  * 
- * So basically, for smaller clusters of 3-4 nodes that need to communicate with low latency this
+ * So basically, for smaller clusters of 3-4 nodes that need to communicate with low latency, this
  * might be a good choice. For larger clusters though it make make more sense to use an AMQP broker
  * or Apache Kafka as a messaging backbone.
  * 
- * This class also exposes a addUrl( url ) method to allow to connect to new servers at runtime
+ * 
+ * In addition to the message connector interface methods this class offers addPeer( url ) and removePeer( url ) methods
+ * to support adding and removing servers at runtime
  * 
  * @param {Object} config Connection configuration.
  * 
@@ -36,10 +43,28 @@ var MessageConnector = function( config ) {
 	this.isReady = false;
 	this.name = pckg.name;
 	this.version = pckg.version;
-
+	
+	this._config = config;
+	this._checkConfig();
+	this._config.reconnectInterval = this._config.reconnectInterval || 2000;
+	this._config.maxReconnectAttepts = this._config.maxReconnectAttepts || Infinity;
+	
+	this._tcpServer = net.createServer( this._onIncomingConnection.bind( this ) );
+	this._tcpServer.listen( config.localport, config.localhost, this._onServerReady.bind( this ) );
+	
+	this._connections = [];
+	this._config.remoteUrls.forEach( this.addPeer.bind( this ) );
 };
 
 util.inherits( MessageConnector, events.EventEmitter );
+
+MessageConnector.prototype.addPeer = function( url ) {
+	this._addConnection( new Connection( url, this._config ) );
+};
+
+MessageConnector.prototype.removePeer = function( url ) {
+	
+};
 
 /**
  * Unsubscribes a function as a listener for a topic. 
@@ -57,7 +82,8 @@ util.inherits( MessageConnector, events.EventEmitter );
  * @returns {void}
  */
 MessageConnector.prototype.unsubscribe = function( topic, callback ) {
-	
+	this.publish( UNSUBSCRIBE, topic );
+	process.nextTick( callback );
 };
 
 /**
@@ -74,7 +100,8 @@ MessageConnector.prototype.unsubscribe = function( topic, callback ) {
  * @returns {void}
  */
 MessageConnector.prototype.subscribe = function( topic, callback ) {
-	
+	this.publish( SUBSCRIBE, topic );
+	process.nextTick( callback );
 };
 
 /**
@@ -96,9 +123,55 @@ MessageConnector.prototype.subscribe = function( topic, callback ) {
  * @returns {void}
  */
 MessageConnector.prototype.publish = function( topic, message ) {
+	var msg = topic + TOPIC_SEPERATOR + message,
+		i;
+	
+	for( i = 0; i < this._connections.length; i++ ) {
+		this._connections[ i ].send( msg );
+	}
+};
+
+MessageConnector.prototype._checkConfig = function() {
+	if( typeof this._config.localhost !== 'string' ) {
+		throw new Error( 'Missing parameter \'localhost\'' );
+	}
+	
+	if( typeof this._config.localport !== 'number' ) {
+		throw new Error( 'Missing parameter \'localport\'' );
+	}
+	
+	if( typeof this._config.remoteUrls !== 'object' || this._config.remoteUrls.length === 0 ) {
+		throw new Error( 'Missing parameter \'remoteUrls\'' );
+	}
+};
+
+MessageConnector.prototype._onIncomingConnection = function( socket ) {
+	this._addConnection( new Connection( socket, this._config ) );
+};
+
+MessageConnector.prototype._addConnection = function( connection ) {
+	connection.on( 'close', this._removeConnection.bind( this, connection ) );
+	connection.on( 'error', this._onConnectionError.bind( this, connection ) );
+	connection.on( 'msg', this._onMessage.bind( this ) );
+	
+	this._connections.push( connection );
+};
+
+MessageConnector.prototype._onMessage = function( msg ) {
 	
 };
 
-MessageConnector.prototype.addUrl
+MessageConnector.prototype._removeConnection = function( connection ) {
+	this._connections.splice( this._connections.indexOf( connection ), 1 );	
+};
+
+MessageConnector.prototype._onConnectionError = function( connection, errorMsg ) {
+	this.emit( 'error', 'Direct connection ' + connection.getRemoteUrl() + ' ' + errorMsg );
+}
+
+MessageConnector.prototype._onServerReady = function() {
+	this.isReady = true;
+	this.emit( 'ready' );
+};
 
 module.exports = MessageConnector;

@@ -1,7 +1,7 @@
 /* global describe, it, expect, jasmine */
 var MessageConnector = require( '../src/message-connector' ),
 	EventEmitter = require( 'events' ).EventEmitter,
-	settings = { port: 5672, host: 'localhost' },
+	settings = { localport: 5672, localhost: 'localhost', remoteUrls: [ 'localhost:5673' ] },
 	MESSAGE_TIME = 20;
 
 describe( 'the message connector has the correct structure', function(){
@@ -22,7 +22,7 @@ describe( 'the message connector has the correct structure', function(){
 		expect( typeof messageConnector.isReady ).toBe( 'boolean' );
 		expect( typeof messageConnector.name ).toBe( 'string' );
 		expect( typeof messageConnector.version ).toBe( 'string' );
-		expect( messageConnector instanceof EventEmitter ).toBe( true );
+		expect( messageConnector instanceof EventEmitter ).toBe( false );
 	});
 	
 	it( 'throws an error when required settings are missing', function() {
