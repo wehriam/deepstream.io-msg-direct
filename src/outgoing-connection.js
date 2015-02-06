@@ -73,7 +73,6 @@ OutgoingConnection.prototype._destroySocket = function() {
 };
 
 OutgoingConnection.prototype._createSocket = function() {
-    console.log( 'CONNECT', this._params );
     this._socket = net.createConnection( this._params );
     this._socket.setEncoding( 'utf8' );
     this._socket.setKeepAlive( true, 2000 );
@@ -81,6 +80,7 @@ OutgoingConnection.prototype._createSocket = function() {
     this._socket.on( 'error', this._onSocketError.bind( this ) );
     this._socket.on( 'data', this._onData.bind( this ) );
     this._socket.on( 'end', this._onDisconnect.bind( this ) );
+    this._socket.on( 'connect', this.emit.bind( this, 'connect') );
 };
 
 module.exports = OutgoingConnection;

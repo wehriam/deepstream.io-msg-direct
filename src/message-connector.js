@@ -63,7 +63,8 @@ util.inherits( MessageConnector, events.EventEmitter );
 
 MessageConnector.prototype.addPeer = function( url ) {
 	if( !this._isConnectedTo( url ) ) {
-		this._addConnection( new OutgoingConnection( url, this._config ) );
+		var outgoingConnection = new OutgoingConnection( url, this._config );
+		outgoingConnection.on( 'connect', this._addUniqueConnection.bind( this, outgoingConnection ) );
 	}
 };
 
@@ -144,13 +145,16 @@ MessageConnector.prototype.publish = function( topic, message ) {
 
 MessageConnector.prototype._isConnectedTo = function( url ) {
 	for( var i = 0; i < this._connections.length; i++ ) {
-		console.log( this._connections[ i ].getRemoteUrl() );
 		if( this._connections[ i ].getRemoteUrl() === url ) {
 			return true;
 		}
 	}
 	
 	return false;
+};
+
+MessageConnector.prototype._addUniqueConnection = function( connection ) {
+	console.log( connection.getRemoteUrl() );
 };
 
 MessageConnector.prototype._checkConfig = function() {
@@ -169,9 +173,8 @@ MessageConnector.prototype._checkConfig = function() {
 
 MessageConnector.prototype._onIncomingConnection = function( socket ) {
 	if( !this._isConnectedTo( socket.remoteAddress + ':' + socket.remotePort ) ) {
-		
+		this._addUniqueConnection( new IncomingConnection( socket, this._config ) );
 	}
-	this._addConnection( new IncomingConnection( socket, this._config ) );
 };
 
 MessageConnector.prototype._addConnection = function( connection ) {

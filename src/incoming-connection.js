@@ -18,16 +18,20 @@ IncomingConnection.prototype.getRemoteUrl = function() {
 	return this._socket.remoteAddress + ':' + this._socket.remotePort;	
 };
 
+IncomingConnection.prototype.getRemoteId = function() {
+    this.emit()
+};
+
 IncomingConnection.prototype.send = function( message ) {
     this._socket.write( message, 'utf8' );
 };
 
 IncomingConnection.prototype._onData = function( data ) {
-    console.log( 'received data', data );
+    this.emit( 'msg', data );
 };
 
 IncomingConnection.prototype._onDisconnect = function( data ) {
-    console.log( 'received data', data );
+    console.log( 'disconnect', data );
 };
 
 IncomingConnection.prototype._onSocketError = function( error ) {
