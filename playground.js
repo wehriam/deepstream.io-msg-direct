@@ -18,14 +18,27 @@ var conB = new MessageConnector({
 });
 
 var test = function() {
-	conA.subscribe( 'ducks', function(){
-		console.log( 'received', arguments );	
+	conA.subscribe( 'ducks', function( name ){
+		console.timeEnd( name );
 	});
 };
 var checkReady = function() {
 	if( conA.isReady && conB.isReady ) {
 		test();
+		send();
 	}
 };
+
+var sendTime;
+
+var send = function(){
+	setInterval(function(){
+		var name =  Math.random().toString(36);
+		console.time( name );
+		conB.publish( 'ducks', name );
+	}, 10 );
+}
+
+
 conA.on( 'ready', checkReady );
 conB.on( 'ready', checkReady );

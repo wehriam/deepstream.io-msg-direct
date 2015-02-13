@@ -1,6 +1,7 @@
 var net = require( 'net' ),
     events = require( 'events' ),
-    util = require( 'util' );
+    util = require( 'util' ),
+    MESSAGE = require( './message-enums' );
 
 var OutgoingConnection = function( url, config ) {
     this._config = config;
@@ -14,7 +15,7 @@ var OutgoingConnection = function( url, config ) {
 util.inherits( OutgoingConnection, events.EventEmitter );
 
 OutgoingConnection.prototype.send = function( message ) {
-    this._socket.write( message, 'utf8' );
+    this._socket.write( message + MESSAGE.MESSAGE_SEPERATOR, 'utf8' );
 };
 
 OutgoingConnection.prototype.destroy = function() {
@@ -22,11 +23,16 @@ OutgoingConnection.prototype.destroy = function() {
 };
 
 OutgoingConnection.prototype._onData = function( data ) {
-    console.log( 'received data', data );
+    var messages = data.split( MESSAGE.MESSAGE_SEPERATOR ),
+        i;
+    
+    for( i = 0; i < messages.length - 1; i++ ) {
+        this.emit( 'msg', messages[ i ] );
+    }
 };
 
 OutgoingConnection.prototype._onDisconnect = function( data ) {
-    console.log( 'received data', data );
+
 };
 
 OutgoingConnection.prototype._onSocketError = function( error ) {

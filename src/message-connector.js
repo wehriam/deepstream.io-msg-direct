@@ -87,6 +87,7 @@ MessageConnector.prototype.getSecurityToken = function() {
 
 MessageConnector.prototype.isConnectedToPeer = function( peerUid ) {
 	for( var i = 0; i < this._connections.length; i++ ) {
+		console.log(  this._connections[ i ].remoteUid, peerUid );
 		if( this._connections[ i ].remoteUid === peerUid ) {
 			return true;
 		}
@@ -133,7 +134,9 @@ MessageConnector.prototype.unsubscribe = function( topic, callback ) {
  */
 MessageConnector.prototype.subscribe = function( topic, callback ) {
 	if( this._emitter.listeners( topic ).length === 0 ) {
-		this.publish( MESSAGE.SUBSCRIBE, topic );
+		for( var i = 0; i < this._connections.length; i++ ) {
+			this._connections[ i ].send( MESSAGE.SUBSCRIBE + topic );
+		}
 	}
 	
 	this._emitter.addListener( topic, callback );
@@ -158,7 +161,7 @@ MessageConnector.prototype.subscribe = function( topic, callback ) {
  * @returns {void}
  */
 MessageConnector.prototype.publish = function( topic, message ) {
-	var msg = topic + MESSAGE.TOPIC_SEPERATOR + message,
+	var msg = MESSAGE.MSG + topic + MESSAGE.TOPIC_SEPERATOR + message,
 		i;
 	
 	for( i = 0; i < this._connections.length; i++ ) {
@@ -192,15 +195,21 @@ MessageConnector.prototype._onIncomingConnection = function( socket ) {
 };
 
 MessageConnector.prototype._addConnection = function( connection ) {
+	console.log( 'connection', connection.remoteUid );
 	connection.on( 'close', this._removeConnection.bind( this, connection ) );
 	connection.on( 'error', this._onConnectionError.bind( this, connection ) );
 	connection.on( 'msg', this._onMessage.bind( this ) );
 
 	this._connections.push( connection );
+	this._checkReady();
 };
 
 MessageConnector.prototype._onMessage = function( msg ) {
-	
+	console.log( 'INCOMING', msg );
+	if( msg[ 0 ] === MESSAGE.MSG ) {
+		var parts = msg.substr( 1 ).split( MESSAGE.TOPIC_SEPERATOR );
+		this._emitter.emit( parts[ 0 ], parts[ 1 ] );
+	}
 };
 
 MessageConnector.prototype._removeConnection = function( connection ) {
@@ -208,13 +217,19 @@ MessageConnector.prototype._removeConnection = function( connection ) {
 };
 
 MessageConnector.prototype._onConnectionError = function( connection, errorMsg ) {
-	console.log( 'Direct connection ' + connection.getRemoteUrl() + ' ' + errorMsg );
 	this.emit( 'error', 'Direct connection ' + connection.getRemoteUrl() + ' ' + errorMsg );
-}
+};
 
 MessageConnector.prototype._onServerReady = function() {
-	this.isReady = true;
-	this.emit( 'ready' );
+	this._serverIsReady = true;
+	this._checkReady();
+};
+
+MessageConnector.prototype._checkReady = function() {
+	if( this._serverIsReady && this._connections.length >= this._config.remoteUrls.length ) {
+		this.isReady = true;
+		this.emit( 'ready' );
+	}
 };
 
 module.exports = MessageConnector;
