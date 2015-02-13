@@ -13,12 +13,12 @@ var OutgoingConnection = function( url, config ) {
 
 util.inherits( OutgoingConnection, events.EventEmitter );
 
-OutgoingConnection.prototype.getRemoteUrl = function() {
-    return this._socket.remoteAddress + ':' + this._socket.remotePort;
-};
-
 OutgoingConnection.prototype.send = function( message ) {
     this._socket.write( message, 'utf8' );
+};
+
+OutgoingConnection.prototype.destroy = function() {
+    
 };
 
 OutgoingConnection.prototype._onData = function( data ) {

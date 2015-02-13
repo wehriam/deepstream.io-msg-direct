@@ -14,16 +14,12 @@ var IncomingConnection = function( socket ) {
 
 util.inherits( IncomingConnection, events.EventEmitter );
 
-IncomingConnection.prototype.getRemoteUrl = function() {
-	return this._socket.remoteAddress + ':' + this._socket.remotePort;	
-};
-
-IncomingConnection.prototype.getRemoteId = function() {
-    this.emit()
-};
-
 IncomingConnection.prototype.send = function( message ) {
     this._socket.write( message, 'utf8' );
+};
+
+IncomingConnection.prototype.destroy = function() {
+    
 };
 
 IncomingConnection.prototype._onData = function( data ) {

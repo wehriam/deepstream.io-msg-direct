@@ -3,10 +3,10 @@ var events = require( 'events' ),
 	net = require( 'net' ),
 	IncomingConnection = require( './incoming-connection' ),
 	OutgoingConnection = require( './outgoing-connection' ),
+	PendingConnection = require( './pending-connection' ),
 	pckg = require( '../package.json' ),
-	TOPIC_SEPERATOR = String.fromCharCode( 29 ),
-	SUBSCRIBE = '__S',
-	UNSUBSCRIBE = '__U';
+	MESSAGE = require( './message-enums' );
+
 
 /**
  * This message connector connects deepstream nodes directly with each other via tcp.
@@ -34,6 +34,7 @@ var events = require( 'events' ),
  *     localhost: <String> e.g. 0.0.0.0
  *     localport: <Number> e.g. 6024
  *     remoteUrls: <Array> e.g. [ '192.168.0.12:6024', 'mydomain:6024' ]
+ *	   securityToken: <String> A token that all deepstream instances that connect directly to each other need to share
  *     reconnectInterval: <Number> e.g. 2000  // time between reconnection attempts in ms
  *     maxReconnectAttepts: <Number> e.g. 10 // number of attempts after a remote server is assumed dead
  * }
@@ -46,7 +47,8 @@ var MessageConnector = function( config ) {
 	this.version = pckg.version;
 	
 	this._emitter = new events.EventEmitter();
-	
+
+	this._uid = Math.round( Math.random() * 10000000000000000 ).toString( 36 );
 	this._config = config;
 	this._checkConfig();
 	this._config.reconnectInterval = this._config.reconnectInterval || 2000;
@@ -62,14 +64,35 @@ var MessageConnector = function( config ) {
 util.inherits( MessageConnector, events.EventEmitter );
 
 MessageConnector.prototype.addPeer = function( url ) {
-	if( !this._isConnectedTo( url ) ) {
-		var outgoingConnection = new OutgoingConnection( url, this._config );
-		outgoingConnection.on( 'connect', this._addUniqueConnection.bind( this, outgoingConnection ) );
-	}
+	var outgoingConnection = new OutgoingConnection( url, this._config );
+	
+	outgoingConnection.on( 'connect', function(){
+		var pendingConnection = new PendingConnection( outgoingConnection, this );
+		pendingConnection.on( 'open', this._addConnection.bind( this ) );	
+	}.bind( this ));
 };
 
 MessageConnector.prototype.removePeer = function( url ) {
 	
+};
+
+MessageConnector.prototype.getUid = function() {
+	return this._uid;	
+};
+
+
+MessageConnector.prototype.getSecurityToken = function() {
+	return this._config.securityToken;
+};
+
+MessageConnector.prototype.isConnectedToPeer = function( peerUid ) {
+	for( var i = 0; i < this._connections.length; i++ ) {
+		if( this._connections[ i ].remoteUid === peerUid ) {
+			return true;
+		}
+	}
+	
+	return false;
 };
 
 /**
@@ -91,7 +114,7 @@ MessageConnector.prototype.unsubscribe = function( topic, callback ) {
 	this._emitter.removeListener( topic, callback );
 		
 	if( this._emitter.listeners( topic ).length === 0 ) {
-		this.publish( UNSUBSCRIBE, topic );
+		this.publish( MESSAGE.UNSUBSCRIBE, topic );
 	}
 };
 
@@ -110,7 +133,7 @@ MessageConnector.prototype.unsubscribe = function( topic, callback ) {
  */
 MessageConnector.prototype.subscribe = function( topic, callback ) {
 	if( this._emitter.listeners( topic ).length === 0 ) {
-		this.publish( SUBSCRIBE, topic );
+		this.publish( MESSAGE.SUBSCRIBE, topic );
 	}
 	
 	this._emitter.addListener( topic, callback );
@@ -135,7 +158,7 @@ MessageConnector.prototype.subscribe = function( topic, callback ) {
  * @returns {void}
  */
 MessageConnector.prototype.publish = function( topic, message ) {
-	var msg = topic + TOPIC_SEPERATOR + message,
+	var msg = topic + MESSAGE.TOPIC_SEPERATOR + message,
 		i;
 	
 	for( i = 0; i < this._connections.length; i++ ) {
@@ -143,23 +166,13 @@ MessageConnector.prototype.publish = function( topic, message ) {
 	}
 };
 
-MessageConnector.prototype._isConnectedTo = function( url ) {
-	for( var i = 0; i < this._connections.length; i++ ) {
-		if( this._connections[ i ].getRemoteUrl() === url ) {
-			return true;
-		}
-	}
-	
-	return false;
-};
-
-MessageConnector.prototype._addUniqueConnection = function( connection ) {
-	console.log( connection.getRemoteUrl() );
-};
-
 MessageConnector.prototype._checkConfig = function() {
 	if( typeof this._config.localhost !== 'string' ) {
 		throw new Error( 'Missing parameter \'localhost\'' );
+	}
+	
+	if( typeof this._config.securityToken !== 'string' ) {
+		throw new Error( 'Missing parameter \'securityToken\'' );
 	}
 	
 	if( typeof this._config.localport !== 'number' ) {
@@ -172,16 +185,17 @@ MessageConnector.prototype._checkConfig = function() {
 };
 
 MessageConnector.prototype._onIncomingConnection = function( socket ) {
-	if( !this._isConnectedTo( socket.remoteAddress + ':' + socket.remotePort ) ) {
-		this._addUniqueConnection( new IncomingConnection( socket, this._config ) );
-	}
+	var incomingConnection = new IncomingConnection( socket, this._config ),
+		pendingConnection = new PendingConnection( incomingConnection, this );
+		
+	pendingConnection.on( 'open', this._addConnection.bind( this ) );
 };
 
 MessageConnector.prototype._addConnection = function( connection ) {
 	connection.on( 'close', this._removeConnection.bind( this, connection ) );
 	connection.on( 'error', this._onConnectionError.bind( this, connection ) );
 	connection.on( 'msg', this._onMessage.bind( this ) );
-	
+
 	this._connections.push( connection );
 };
 

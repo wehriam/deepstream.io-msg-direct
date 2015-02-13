@@ -5,14 +5,16 @@ var conA = new MessageConnector({
 	localhost: 'localhost', 
 	remoteUrls: [ 'localhost:3001' ],
 	reconnectInterval: 100,
-	maxReconnectAttepts: 10
+	maxReconnectAttepts: 10,
+	securityToken: 'bla'
 });
 
 var conB = new MessageConnector({
 	localport: 3001, 
 	localhost: 'localhost', 
 	remoteUrls: [ 'localhost:3000' ],
-	reconnectInterval: 100
+	reconnectInterval: 100,
+	securityToken: 'bla'
 });
 
 var test = function() {
