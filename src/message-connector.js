@@ -36,7 +36,9 @@ var events = require( 'events' ),
  *     remoteUrls: <Array> e.g. [ '192.168.0.12:6024', 'mydomain:6024' ]
  *	   securityToken: <String> A token that all deepstream instances that connect directly to each other need to share
  *     reconnectInterval: <Number> e.g. 2000  // time between reconnection attempts in ms
- *     maxReconnectAttepts: <Number> e.g. 10 // number of attempts after a remote server is assumed dead
+ *     maxReconnectAttempts: <Number> e.g. 10 // number of attempts after a remote server is assumed dead
+ *     minimumRequiredConnections: <Number> e.g. 1 // number of other deepstream instances this instance needs to 
+ *     											  // be connected to before it emits its ready event
  * }
  *
  * @constructor
@@ -52,7 +54,11 @@ var MessageConnector = function( config ) {
 	this._config = config;
 	this._checkConfig();
 	this._config.reconnectInterval = this._config.reconnectInterval || 2000;
-	this._config.maxReconnectAttepts = this._config.maxReconnectAttepts || Infinity;
+	this._config.maxReconnectAttempts = this._config.maxReconnectAttempts || Infinity;
+	
+	if( this._config.minimumRequiredConnections === undefined ) {
+		this._config.minimumRequiredConnections = 1;
+	}
 	
 	this._tcpServer = net.createServer( this._onIncomingConnection.bind( this ) );
 	this._tcpServer.listen( config.localport, config.localhost, this._onServerReady.bind( this ) );
@@ -87,7 +93,6 @@ MessageConnector.prototype.getSecurityToken = function() {
 
 MessageConnector.prototype.isConnectedToPeer = function( peerUid ) {
 	for( var i = 0; i < this._connections.length; i++ ) {
-		console.log(  this._connections[ i ].remoteUid, peerUid );
 		if( this._connections[ i ].remoteUid === peerUid ) {
 			return true;
 		}
@@ -195,7 +200,6 @@ MessageConnector.prototype._onIncomingConnection = function( socket ) {
 };
 
 MessageConnector.prototype._addConnection = function( connection ) {
-	console.log( 'connection', connection.remoteUid );
 	connection.on( 'close', this._removeConnection.bind( this, connection ) );
 	connection.on( 'error', this._onConnectionError.bind( this, connection ) );
 	connection.on( 'msg', this._onMessage.bind( this ) );
@@ -205,7 +209,6 @@ MessageConnector.prototype._addConnection = function( connection ) {
 };
 
 MessageConnector.prototype._onMessage = function( msg ) {
-	console.log( 'INCOMING', msg );
 	if( msg[ 0 ] === MESSAGE.MSG ) {
 		var parts = msg.substr( 1 ).split( MESSAGE.TOPIC_SEPERATOR );
 		this._emitter.emit( parts[ 0 ], parts[ 1 ] );

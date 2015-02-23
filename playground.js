@@ -32,12 +32,10 @@ var checkReady = function() {
 var sendTime;
 
 var send = function(){
-	setInterval(function(){
-		var name =  Math.random().toString(36);
-		console.time( name );
-		conB.publish( 'ducks', name );
-	}, 10 );
-}
+	var name =  Math.random().toString(36);
+	console.time( name );
+	conB.publish( 'ducks', name );
+};
 
 
 conA.on( 'ready', checkReady );

@@ -1,44 +1,21 @@
 var net = require( 'net' ),
-    events = require( 'events' ),
-    util = require( 'util' ),
-    MESSAGE = require( './message-enums' );
+	util = require( 'util' ),
+	MESSAGE = require( './message-enums' ),
+	AbstractConnection = require( './abstract-connection' );
 
 var IncomingConnection = function( socket ) {
-    this._socket = socket;
-    this._socket.setEncoding( 'utf8' );
-    this._socket.setKeepAlive( true, 2000 );
-    this._socket.setNoDelay( true );
-    this._socket.on( 'error', this._onSocketError.bind( this ) );
-    this._socket.on( 'data', this._onData.bind( this ) );
-    this._socket.on( 'end', this._onDisconnect.bind( this ) );
+	this._socket = socket;
+	this._configureSocket();
 };
 
-util.inherits( IncomingConnection, events.EventEmitter );
-
-IncomingConnection.prototype.send = function( message ) {
-    this._socket.write( message + MESSAGE.MESSAGE_SEPERATOR, 'utf8' );
-};
-
-IncomingConnection.prototype.destroy = function() {
-    
-};
-
-IncomingConnection.prototype._onData = function( data ) {
-    var messages = data.split( MESSAGE.MESSAGE_SEPERATOR ),
-        i;
-    
-    for( i = 0; i < messages.length - 1; i++ ) {
-        this.emit( 'msg', messages[ i ] );
-    }
-};
-
+util.inherits( IncomingConnection, AbstractConnection );
 
 IncomingConnection.prototype._onDisconnect = function( data ) {
-    console.log( 'disconnect', data );
+	console.log( 'disconnect', data );
 };
 
 IncomingConnection.prototype._onSocketError = function( error ) {
-    this.emit( 'error', error );
+	this.emit( 'error', error );
 };
 
 module.exports = IncomingConnection;

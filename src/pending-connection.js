@@ -37,7 +37,6 @@ PendingConnection.prototype._checkIdentification = function( msg ) {
 	try{
 		data = JSON.parse( msg );
 	} catch( e ) {
-		console.log( msg, e  );
 		this._reject( ERRORS.MESSAGE_PARSE_ERROR );
 		return;
 	}
