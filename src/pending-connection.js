@@ -57,7 +57,6 @@ PendingConnection.prototype._checkIdentification = function( msg ) {
 };
 
 PendingConnection.prototype._reject = function( error ) {
-	console.log( 'reject', error );
 	this._connection.send( MESSAGE.ERROR + error );
 	this._connection.destroy();
 	this._complete();

@@ -29,12 +29,12 @@ OutgoingConnection.prototype._onSocketError = function( error ) {
 
 OutgoingConnection.prototype._scheduleReconnect = function() {
 	this._connectionAttempts++;
-		
-	if( this._connectionAttempts <= this._config.maxReconnectAttepts ) {
+	
+	if( this._connectionAttempts <= this._config.maxReconnectAttempts ) {
 		this._destroySocket();
 		this._reconnectTimeout = setTimeout( this._createSocket.bind( this ), this._config.reconnectInterval );
 	} else {
-		this.emit( 'error', 'max reconnection attempts (' + this._config.maxReconnectAttepts + ') exceeded' );
+		this.emit( 'error', 'max reconnection attempts (' + this._config.maxReconnectAttempts + ') exceeded' );
 	}
 };
 

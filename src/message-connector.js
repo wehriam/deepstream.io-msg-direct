@@ -62,7 +62,7 @@ var MessageConnector = function( config ) {
 	
 	this._tcpServer = net.createServer( this._onIncomingConnection.bind( this ) );
 	this._tcpServer.listen( config.localport, config.localhost, this._onServerReady.bind( this ) );
-	
+
 	this._connections = [];
 	this._config.remoteUrls.forEach( this.addPeer.bind( this ) );
 };
@@ -166,8 +166,14 @@ MessageConnector.prototype.subscribe = function( topic, callback ) {
  * @returns {void}
  */
 MessageConnector.prototype.publish = function( topic, message ) {
-	var msg = MESSAGE.MSG + topic + MESSAGE.TOPIC_SEPERATOR + message,
-		i;
+	var msg, i;
+	
+	try{
+		msg = MESSAGE.MSG + topic + MESSAGE.TOPIC_SEPERATOR + JSON.stringify( message );
+	} catch( e ) {
+		this.emit( 'error', 'error while serializing message: ' + e.toString() );
+		return;
+	}
 	
 	for( i = 0; i < this._connections.length; i++ ) {
 		this._connections[ i ].send( msg );
@@ -210,8 +216,16 @@ MessageConnector.prototype._addConnection = function( connection ) {
 
 MessageConnector.prototype._onMessage = function( msg ) {
 	if( msg[ 0 ] === MESSAGE.MSG ) {
-		var parts = msg.substr( 1 ).split( MESSAGE.TOPIC_SEPERATOR );
-		this._emitter.emit( parts[ 0 ], parts[ 1 ] );
+		var parts = msg.substr( 1 ).split( MESSAGE.TOPIC_SEPERATOR ),
+			data;
+			
+		try{
+			data = JSON.parse( parts[ 1 ] );
+		} catch( e ) {
+			this.emit( 'error', 'error while parsing message: ' + e.toString() );
+			return;
+		}
+		this._emitter.emit( parts[ 0 ], data );
 	}
 };
 
@@ -229,7 +243,7 @@ MessageConnector.prototype._onServerReady = function() {
 };
 
 MessageConnector.prototype._checkReady = function() {
-	if( this._serverIsReady && this._connections.length >= this._config.remoteUrls.length ) {
+	if( this._serverIsReady && this._connections.length >= this._config.minimumRequiredConnections ) {
 		this.isReady = true;
 		this.emit( 'ready' );
 	}

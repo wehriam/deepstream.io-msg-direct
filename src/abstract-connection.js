@@ -2,7 +2,7 @@ var events = require( 'events' ),
 	util = require( 'util' ),
 	MESSAGE = require( './message-enums' );
 
-AbstractConnection = function() {};
+var AbstractConnection = function() {};
 
 util.inherits( AbstractConnection, events.EventEmitter );
 
