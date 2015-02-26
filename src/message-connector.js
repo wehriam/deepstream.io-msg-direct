@@ -4,6 +4,7 @@ var events = require( 'events' ),
 	IncomingConnection = require( './incoming-connection' ),
 	OutgoingConnection = require( './outgoing-connection' ),
 	PendingConnection = require( './pending-connection' ),
+	RemoteSubscriberRegistry = require( './remote-subscriber-registry' ),
 	pckg = require( '../package.json' ),
 	MESSAGE = require( './message-enums' );
 
@@ -49,6 +50,7 @@ var MessageConnector = function( config ) {
 	this.version = pckg.version;
 	
 	this._emitter = new events.EventEmitter();
+	this._remoteSubscriberRegistry = new RemoteSubscriberRegistry();
 
 	this._uid = Math.round( Math.random() * 10000000000000000 ).toString( 36 );
 	this._config = config;
@@ -175,9 +177,7 @@ MessageConnector.prototype.publish = function( topic, message ) {
 		return;
 	}
 	
-	for( i = 0; i < this._connections.length; i++ ) {
-		this._connections[ i ].send( msg );
-	}
+	this._remoteSubscriberRegistry.sendMsgForTopic( topic, msg );
 };
 
 MessageConnector.prototype._checkConfig = function() {
@@ -208,15 +208,18 @@ MessageConnector.prototype._onIncomingConnection = function( socket ) {
 MessageConnector.prototype._addConnection = function( connection ) {
 	connection.on( 'close', this._removeConnection.bind( this, connection ) );
 	connection.on( 'error', this._onConnectionError.bind( this, connection ) );
-	connection.on( 'msg', this._onMessage.bind( this ) );
+	connection.on( 'msg', this._onMessage.bind( this, connection ) );
 
 	this._connections.push( connection );
 	this._checkReady();
 };
 
-MessageConnector.prototype._onMessage = function( msg ) {
-	if( msg[ 0 ] === MESSAGE.MSG ) {
-		var parts = msg.substr( 1 ).split( MESSAGE.TOPIC_SEPERATOR ),
+MessageConnector.prototype._onMessage = function( connection, msg ) {
+	var msgType = msg[ 0 ],
+		msgContent = msg.substr( 1 );
+
+	if( msgType === MESSAGE.MSG ) {
+		var parts = msgContent.split( MESSAGE.TOPIC_SEPERATOR ),
 			data;
 			
 		try{
@@ -226,6 +229,14 @@ MessageConnector.prototype._onMessage = function( msg ) {
 			return;
 		}
 		this._emitter.emit( parts[ 0 ], data );
+	}
+	else if( msgType === MESSAGE.SUBSCRIBE ) {
+		this._remoteSubscriberRegistry.add( msgContent, connection );
+	}
+	else if( msgType === MESSAGE.UNSUBSCRIBE ) {
+		this._remoteSubscriberRegistry.remove( msgContent, connection );
+	} else if( msgType === MESSAGE.ERROR ) {
+		console.log( 'ERROR', data );
 	}
 };
 

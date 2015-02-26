@@ -12,7 +12,7 @@ var MessageConnector = require( '../src/message-connector' ),
 	},
 	MESSAGE_TIME = 100;
 
-describe( 'Messages are send between multiple instances', function(){
+xdescribe( 'Messages are send between multiple instances', function(){
 	var connectorA,
 		connectorB,
 		connectorC,
@@ -47,11 +47,12 @@ describe( 'Messages are send between multiple instances', function(){
 	    expect( connectorC.isReady ).toBe( true );
 	});
 	
-	it( 'subscribes to a topic', function(){
+	it( 'subscribes to a topic', function( done ){
 		connectorA.subscribe( 'topic1', callback_A1 );
 		connectorB.subscribe( 'topic1', callback_B1 );
 		connectorC.subscribe( 'topic1', callback_C1 );
 		expect( callback_A1 ).not.toHaveBeenCalled();
+		setTimeout( done, MESSAGE_TIME );
 	});
 	
 	it( 'connectorB sends a message', function( done ){

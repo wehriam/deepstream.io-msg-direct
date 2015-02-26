@@ -2,9 +2,15 @@ var events = require( 'events' ),
 	util = require( 'util' ),
 	MESSAGE = require( './message-enums' );
 
-var AbstractConnection = function() {};
+var AbstractConnection = function() {
+	this.isRejected = false;
+};
 
 util.inherits( AbstractConnection, events.EventEmitter );
+
+AbstractConnection.prototype.getRemoteUrl = function() {
+	return this._socket.remoteAddress + ':' + this._socket.remotePort;
+};
 
 AbstractConnection.prototype.send = function( message ) {
 	this._socket.write( message + MESSAGE.MESSAGE_SEPERATOR, 'utf8' );

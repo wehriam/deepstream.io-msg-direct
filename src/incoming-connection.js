@@ -4,6 +4,8 @@ var net = require( 'net' ),
 	AbstractConnection = require( './abstract-connection' );
 
 var IncomingConnection = function( socket ) {
+	AbstractConnection.call( this );
+	
 	this._socket = socket;
 	this._configureSocket();
 };

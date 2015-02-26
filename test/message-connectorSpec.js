@@ -9,7 +9,7 @@ var MessageConnector = require( '../src/message-connector' ),
 	},
 	MESSAGE_TIME = 20;
 
-describe( 'the message connector has the correct structure', function(){
+xdescribe( 'the message connector has the correct structure', function(){
 	
 	var messageConnector;
 	

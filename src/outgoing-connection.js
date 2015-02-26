@@ -4,6 +4,8 @@ var net = require( 'net' ),
 	AbstractConnection = require( './abstract-connection' );
 
 var OutgoingConnection = function( url, config ) {
+	AbstractConnection.call( this );
+	
 	this._config = config;
 	this._params = this._parseUrl( url );
 	this._connectionAttempts = 0;
@@ -14,13 +16,8 @@ var OutgoingConnection = function( url, config ) {
 
 util.inherits( OutgoingConnection, AbstractConnection );
 
-
-OutgoingConnection.prototype._onDisconnect = function( data ) {
-
-};
-
 OutgoingConnection.prototype._onSocketError = function( error ) {
-	if( error.code === 'ECONNREFUSED' ) {
+	if( error.code === 'ECONNREFUSED' && this.isRejected === false ) {
 		this._scheduleReconnect();
 	} else {
 		this.emit( 'error', error );

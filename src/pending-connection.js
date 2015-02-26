@@ -26,8 +26,14 @@ PendingConnection.prototype._onMessage = function( msg ) {
 		return;
 	}
 	
-	if( msg[ 0 ] === MESSAGE.IDENTIFY ) {
-		this._checkIdentification( msg.substr( 1 ) );
+	var msgType = msg[ 0 ],
+		msgData = msg.substr( 1 );
+		
+	if( msgType === MESSAGE.IDENTIFY ) {
+		this._checkIdentification( msgData );
+	}
+	else if( msgType === MESSAGE.REJECT ) {
+		this._onRejected( msgData );
 	}
 };
 
@@ -57,8 +63,24 @@ PendingConnection.prototype._checkIdentification = function( msg ) {
 };
 
 PendingConnection.prototype._reject = function( error ) {
-	this._connection.send( MESSAGE.ERROR + error );
+	this._connection.send( MESSAGE.REJECT + error );
+	setTimeout( this._destroyConnection.bind( this ), 20 );
+};
+
+PendingConnection.prototype._destroyConnection = function() {
+	if( !this._connection ) {
+		return;
+	}
+	
 	this._connection.destroy();
+	this._complete();
+};
+
+PendingConnection.prototype._onRejected = function( reason ) {
+	var msg = 'Connection to ' + this._connection.getRemoteUrl() + ' was rejected due to ' + reason;
+
+	this._messageConnector.emit( 'error', msg );
+	this._connection.isRejected = true;
 	this._complete();
 };
 
