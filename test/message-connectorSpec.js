@@ -32,4 +32,9 @@ xdescribe( 'the message connector has the correct structure', function(){
 	it( 'throws an error when required settings are missing', function() {
 		expect(function(){ new MessageConnector( 'gibberish' ); }).toThrow();
 	});
+	
+	it( 'destroys the messageConnector', function( done ) {
+		messageConnector.once( 'destroyed', done );
+		messageConnector.destroy();
+	});
 });

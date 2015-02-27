@@ -12,7 +12,7 @@ var MessageConnector = require( '../src/message-connector' ),
 	},
 	MESSAGE_TIME = 100;
 
-xdescribe( 'Messages are send between multiple instances', function(){
+describe( 'Messages are send between multiple instances', function(){
 	var connectorA,
 		connectorB,
 		connectorC,
@@ -104,5 +104,19 @@ xdescribe( 'Messages are send between multiple instances', function(){
 		expect( callback_B1 ).not.toHaveBeenCalledWith({ notFor: 'B' });
 		expect( callback_C1 ).toHaveBeenCalledWith({ notFor: 'B' });
 	});
-
+	
+	it( 'destroyes connectorA', function(done) {
+		connectorA.on( 'destroyed', done );
+	    connectorA.destroy();
+	});
+	
+	it( 'destroyes connectorB', function(done) {
+		connectorB.on( 'destroyed', done );
+	    connectorB.destroy();
+	});
+	
+	it( 'destroyes connectorC', function(done) {
+		connectorC.on( 'destroyed', done );
+	    connectorC.destroy();
+	});
 });

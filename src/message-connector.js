@@ -49,6 +49,7 @@ var MessageConnector = function( config ) {
 	this.name = pckg.name;
 	this.version = pckg.version;
 	
+	this._serverIsReady = false;
 	this._emitter = new events.EventEmitter();
 	this._remoteSubscriberRegistry = new RemoteSubscriberRegistry();
 
@@ -73,7 +74,7 @@ util.inherits( MessageConnector, events.EventEmitter );
 
 MessageConnector.prototype.addPeer = function( url ) {
 	var outgoingConnection = new OutgoingConnection( url, this._config );
-	
+
 	outgoingConnection.on( 'connect', function(){
 		var pendingConnection = new PendingConnection( outgoingConnection, this );
 		pendingConnection.on( 'open', this._addConnection.bind( this ) );	
@@ -84,10 +85,37 @@ MessageConnector.prototype.removePeer = function( url ) {
 	
 };
 
+MessageConnector.prototype.destroy = function() {
+	var connection, i;
+	
+	for( i = 0; i < this._connections.length; i++ ) {
+		connection = this._connections[ i ];
+		if( !connection.isClosed ) {
+			connection.once( 'closed', this._checkClose.bind( this ) );
+			connection.destroy();
+		}
+	}
+	
+	this._checkClose();
+};
+
+
+MessageConnector.prototype._checkClose = function() {
+	for( var i = 0; i < this._connections.length; i++ ) {
+		if( !this._connections[ i ].isClosed ) {
+			return;
+		}
+	}
+	
+	if( this._serverIsReady ) {
+		this._serverIsReady = false;
+		this._tcpServer.close( this.emit.bind( this, 'destroyed' ) );
+	}
+};
+
 MessageConnector.prototype.getUid = function() {
 	return this._uid;	
 };
-
 
 MessageConnector.prototype.getSecurityToken = function() {
 	return this._config.securityToken;
@@ -201,7 +229,7 @@ MessageConnector.prototype._checkConfig = function() {
 MessageConnector.prototype._onIncomingConnection = function( socket ) {
 	var incomingConnection = new IncomingConnection( socket, this._config ),
 		pendingConnection = new PendingConnection( incomingConnection, this );
-		
+
 	pendingConnection.on( 'open', this._addConnection.bind( this ) );
 };
 

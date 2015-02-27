@@ -5,6 +5,7 @@ module.exports = {
 	UNSUBSCRIBE: 'U',
 	IDENTIFY: 'I',
 	REJECT: 'R',
+	CLOSE: 'C',
 	MSG: 'M',
 	ERROR: 'E'
 };

@@ -12,10 +12,6 @@ var IncomingConnection = function( socket ) {
 
 util.inherits( IncomingConnection, AbstractConnection );
 
-IncomingConnection.prototype._onDisconnect = function( data ) {
-	console.log( 'disconnect', data );
-};
-
 IncomingConnection.prototype._onSocketError = function( error ) {
 	this.emit( 'error', error );
 };
