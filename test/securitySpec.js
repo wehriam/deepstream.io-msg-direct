@@ -2,7 +2,7 @@
 
 var MessageConnector = require( '../src/message-connector' );
 
-xdescribe( 'security features work', function(){
+describe( 'security features work', function(){
 	var connectorA,
 		connectorB;
 	
@@ -33,7 +33,7 @@ xdescribe( 'security features work', function(){
 	});
 	
 	it( 'rejects connector with different security token', function( done ) {
-	    var connectorB = new MessageConnector({
+	    connectorB = new MessageConnector({
 			localport: 2008, 
 			localhost: 'localhost', 
 			remoteUrls: [ 'localhost:2007' ],

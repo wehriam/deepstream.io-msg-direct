@@ -5,18 +5,20 @@ var MessageConnector = require( '../src/message-connector' ),
 		localport: 5672, 
 		localhost: 'localhost', 
 		remoteUrls: [ 'localhost:5673' ],
-		securityToken: 'bla'
+		securityToken: 'bla',
+		minimumRequiredConnections: 0
 	},
 	MESSAGE_TIME = 20;
 
-xdescribe( 'the message connector has the correct structure', function(){
+describe( 'the message connector has the correct structure', function(){
 	
 	var messageConnector;
 	
-	it( 'creates a messageConnector', function(){
+	it( 'creates a messageConnector', function( done ){
 		messageConnector = new MessageConnector( settings );
 		expect( messageConnector.isReady ).toBe( false );
 		messageConnector.on( 'error', function( e ){ throw e; });
+		messageConnector.on( 'ready', done );
 	});
 	
 	it( 'implements the messageConnector interface', function() {

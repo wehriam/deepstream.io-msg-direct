@@ -5,7 +5,7 @@ var RemoteSubscriberRegistry = require( '../src/remote-subscriber-registry' ),
 		this.send = jasmine.createSpy( 'send' );
 	};
 	
-xdescribe('remote subscriber registry', function(){
+describe('remote subscriber registry', function(){
 	var registry, 
 		connectionA = new MockConnection(),
 		connectionB = new MockConnection();
