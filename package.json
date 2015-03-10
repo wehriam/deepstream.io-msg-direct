@@ -1,14 +1,14 @@
 {
-  "name": "deepstream.io-msg-connector-template",
-  "version": "0.0.2",
-  "description": "template/scaffold for [deepstream](http://deepstream.io) message connector",
+  "name": "deepstream.io-msg-direct",
+  "version": "0.0.1",
+  "description": "Directly connects [deepstream](http://deepstream.io) nodes with each other",
   "main": "src/message-connector.js",
   "scripts": {
     "test": "node node_modules/jasmine-node/lib/jasmine-node/cli.js test --captureExceptions --autotest --watch ./src"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hoxton-one/deepstream.io-msg-connector-template.git"
+    "url": "https://github.com/hoxton-one/deepstream.io-msg-direct.git"
   },
   "author": "Wolfram Hempel",
   "license": "MIT",
@@ -19,7 +19,7 @@
     "jasmine-node": "1.14.5"
   },
   "bugs": {
-    "url": "https://github.com/hoxton-one/deepstream.io-msg-connector-template/issues"
+    "url": "https://github.com/hoxton-one/deepstream.io-msg-direct/issues"
   },
   "homepage": "http://deepstream.io"
 }
