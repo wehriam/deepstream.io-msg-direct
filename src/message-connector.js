@@ -264,7 +264,7 @@ MessageConnector.prototype._onMessage = function( connection, msg ) {
 	else if( msgType === MESSAGE.UNSUBSCRIBE ) {
 		this._remoteSubscriberRegistry.remove( msgContent, connection );
 	} else if( msgType === MESSAGE.ERROR ) {
-		console.log( 'ERROR', data );
+		console.log( 'ERROR', msg );
 	}
 };
 
