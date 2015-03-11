@@ -208,6 +208,14 @@ MessageConnector.prototype.publish = function( topic, message ) {
 	this._remoteSubscriberRegistry.sendMsgForTopic( topic, msg );
 };
 
+MessageConnector.prototype.close = function() {
+	this._tcpServer.close( this.emit.bind( this, 'close' ) );
+	
+	for( var i = 0; i < this._connections.length; i++ ) {
+		this._connections[ i ].destroy();
+	}
+};
+
 MessageConnector.prototype._checkConfig = function() {
 	if( typeof this._config.localhost !== 'string' ) {
 		throw new Error( 'Missing parameter \'localhost\'' );
