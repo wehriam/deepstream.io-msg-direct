@@ -10,7 +10,7 @@ var Deepstream = require( 'deepstream.io' ),
     DirectMessageConnector = require( 'deepstream.io-msg-direct' ),
     server = new Deepstream();
 
-var directMessageConnector =new directMessageConnector({
+var directMessageConnector =new DirectMessageConnector({
   localhost: 0.0.0.0,
   localpost: 6024,
   remoteUrls: [ 'deepstream-one:6024', 'deepstream-two:6024' ]
