@@ -1,6 +1,6 @@
 {
   "name": "deepstream.io-msg-direct",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Directly connects [deepstream](http://deepstream.io) nodes with each other",
   "main": "src/message-connector.js",
   "scripts": {
