@@ -36,7 +36,7 @@ describe( 'the message connector has the correct structure', function(){
 	});
 	
 	it( 'destroys the messageConnector', function( done ) {
-		messageConnector.once( 'destroyed', done );
-		messageConnector.destroy();
+		messageConnector.once( 'close', done );
+		messageConnector.close();
 	});
 });

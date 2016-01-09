@@ -53,12 +53,12 @@ describe( 'security features work', function(){
 	});
 	
 	it( 'destroyes connectorA', function(done) {
-		connectorA.on( 'destroyed', done );
-	    connectorA.destroy();
+		connectorA.on( 'close', done );
+	    connectorA.close();
 	});
 	
 	it( 'destroyes connectorB', function(done) {
-		connectorB.on( 'destroyed', done );
-	    connectorB.destroy();
+		connectorB.on( 'close', done );
+	    connectorB.close();
 	});
 });

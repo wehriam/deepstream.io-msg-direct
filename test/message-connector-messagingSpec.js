@@ -106,17 +106,17 @@ describe( 'Messages are send between multiple instances', function(){
 	});
 	
 	it( 'destroyes connectorA', function(done) {
-		connectorA.on( 'destroyed', done );
-	    connectorA.destroy();
+		connectorA.on( 'close', done );
+	    connectorA.close();
 	});
 	
 	it( 'destroyes connectorB', function(done) {
-		connectorB.on( 'destroyed', done );
-	    connectorB.destroy();
+		connectorB.on( 'close', done );
+	    connectorB.close();
 	});
 	
 	it( 'destroyes connectorC', function(done) {
-		connectorC.on( 'destroyed', done );
-	    connectorC.destroy();
+		connectorC.on( 'close', done );
+	    connectorC.close();
 	});
 });

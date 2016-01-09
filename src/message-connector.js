@@ -85,7 +85,7 @@ MessageConnector.prototype.removePeer = function( url ) {
 	
 };
 
-MessageConnector.prototype.destroy = function() {
+MessageConnector.prototype.close = function() {
 	var connection, i;
 	
 	for( i = 0; i < this._connections.length; i++ ) {
@@ -109,7 +109,7 @@ MessageConnector.prototype._checkClose = function() {
 	
 	if( this._serverIsReady ) {
 		this._serverIsReady = false;
-		this._tcpServer.close( this.emit.bind( this, 'destroyed' ) );
+		this._tcpServer.close( this.emit.bind( this, 'close' ) );
 	}
 };
 
