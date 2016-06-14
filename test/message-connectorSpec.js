@@ -1,42 +1,45 @@
 /* global describe, it, expect, jasmine */
-var MessageConnector = require( '../src/message-connector' ),
-	EventEmitter = require( 'events' ).EventEmitter,
-	settings = { 
-		localport: 5672, 
-		localhost: 'localhost', 
-		remoteUrls: [ 'localhost:5673' ],
-		securityToken: 'bla',
-		minimumRequiredConnections: 0
-	},
-	MESSAGE_TIME = 20;
+const MessageConnector = require( '../src/message-connector' )
+const expect = require('chai').expect
+const sinon = require( 'sinon' )
+const sinonChai = require("sinon-chai")
+require('chai').use(sinonChai)
+const EventEmitter = require( 'events' ).EventEmitter
+const settings = {
+  localport: 5672,
+  localhost: 'localhost',
+  remoteUrls: [ 'localhost:5673' ],
+  securityToken: 'bla',
+  minimumRequiredConnections: 0
+}
 
-describe( 'the message connector has the correct structure', function(){
-	
-	var messageConnector;
-	
-	it( 'creates a messageConnector', function( done ){
-		messageConnector = new MessageConnector( settings );
-		expect( messageConnector.isReady ).toBe( false );
-		messageConnector.on( 'error', function( e ){ throw e; });
-		messageConnector.on( 'ready', done );
-	});
-	
-	it( 'implements the messageConnector interface', function() {
-		expect( typeof messageConnector.subscribe ).toBe( 'function' );    
-		expect( typeof messageConnector.unsubscribe ).toBe( 'function' );    
-		expect( typeof messageConnector.publish ).toBe( 'function' );
-		expect( typeof messageConnector.isReady ).toBe( 'boolean' );
-		expect( typeof messageConnector.name ).toBe( 'string' );
-		expect( typeof messageConnector.version ).toBe( 'string' );
-		expect( messageConnector instanceof EventEmitter ).toBe( true );
-	});
-	
-	it( 'throws an error when required settings are missing', function() {
-		expect(function(){ new MessageConnector( 'gibberish' ); }).toThrow();
-	});
-	
-	it( 'destroys the messageConnector', function( done ) {
-		messageConnector.once( 'close', done );
-		messageConnector.close();
-	});
-});
+describe( 'the message connector has the correct structure', () => {
+
+  var messageConnector
+
+  it( 'creates a messageConnector', ( done ) => {
+    messageConnector = new MessageConnector( settings )
+    expect( messageConnector.isReady ).to.equal( false )
+    messageConnector.on( 'error', done )
+    messageConnector.on( 'ready', done )
+  })
+
+  it( 'implements the messageConnector interface', () => {
+    expect( typeof messageConnector.subscribe ).to.equal( 'function' )
+    expect( typeof messageConnector.unsubscribe ).to.equal( 'function' )
+    expect( typeof messageConnector.publish ).to.equal( 'function' )
+    expect( typeof messageConnector.isReady ).to.equal( 'boolean' )
+    expect( typeof messageConnector.name ).to.equal( 'string' )
+    expect( typeof messageConnector.version ).to.equal( 'string' )
+    expect( messageConnector instanceof EventEmitter ).to.equal( true )
+  })
+
+  it( 'throws an error when required settings are missing', () => {
+    expect(() => { new MessageConnector( 'gibberish' ) }).to.throw()
+  })
+
+  it( 'destroys the messageConnector', ( done ) => {
+    messageConnector.once( 'close', done )
+    messageConnector.close()
+  })
+})

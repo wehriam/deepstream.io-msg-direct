@@ -4,22 +4,30 @@
   "description": "Directly connects [deepstream](http://deepstream.io) nodes with each other",
   "main": "src/message-connector.js",
   "scripts": {
-    "test": "node node_modules/jasmine-node/lib/jasmine-node/cli.js test --captureExceptions --autotest --watch ./src"
+    "test": "mocha",
+    "coverage": "istanbul cover node_modules/mocha/bin/_mocha",
+    "lint": "eslint \"src/**/*.js\" \"test/**/*.js\"",
+    "ci": "npm run coverage && npm run lint"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hoxton-one/deepstream.io-msg-direct.git"
+    "url": "https://github.com/deepstreamIO/deepstream.io-msg-direct.git"
   },
-  "author": "Wolfram Hempel",
-  "license": "MIT",
+  "author": "deepstreamHub GmbH",
+  "license": "Apache-2.0",
   "dependencies": {},
   "devDependencies": {
-    "grunt": "~0.4.5",
-    "grunt-release": "0.9.0",
-    "jasmine-node": "1.14.5"
+    "chai": "^3.5.0",
+    "coveralls": "^2.11.9",
+    "eslint": "^2.11.1",
+    "eslint-config-airbnb": "^3.1.0",
+    "istanbul": "^0.4.3",
+    "mocha": "^2.5.2",
+    "sinon": "^1.17.4",
+    "sinon-chai": "^2.8.0"
   },
   "bugs": {
-    "url": "https://github.com/hoxton-one/deepstream.io-msg-direct/issues"
+    "url": "https://github.com/deepstreamIO/deepstream.io-msg-direct/issues"
   },
   "homepage": "http://deepstream.io"
 }

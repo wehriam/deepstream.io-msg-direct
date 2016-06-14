@@ -1,7 +1,7 @@
-var events = require( 'events' ),
-	util = require( 'util' ),
-	MESSAGE = require( './message-enums' ),
-	ERRORS = require( './errors' );
+const events = require( 'events' )
+const  util = require( 'util' )
+const  MESSAGE = require( './message-enums' )
+const  ERRORS = require( './errors' )
 
 /**
  * This class serves as a quarantine area for connections that
@@ -21,20 +21,20 @@ var events = require( 'events' ),
  * @param {MessageConnector} messageConnector
  */
 var PendingConnection = function( connection, messageConnector ) {
-	this._connection = connection;
-	this._messageConnector = messageConnector;
-	this._completeFn = this._complete.bind( this );
-	this._onMessageFn = this._onMessage.bind( this );
-	
-	this._connection.on( 'close', this._completeFn );
-	this._connection.on( 'error', this._completeFn );
-	this._connection.on( 'msg', this._onMessageFn );
-	
-	this._connectionTimeout = setTimeout( this._completeFn, 2000 );
-	this._sendIdentification();
-};
+  this._connection = connection
+  this._messageConnector = messageConnector
+  this._completeFn = this._complete.bind( this )
+  this._onMessageFn = this._onMessage.bind( this )
 
-util.inherits( PendingConnection, events.EventEmitter );
+  this._connection.on( 'close', this._completeFn )
+  this._connection.on( 'error', this._completeFn )
+  this._connection.on( 'msg', this._onMessageFn )
+
+  this._connectionTimeout = setTimeout( this._completeFn, 2000 )
+  this._sendIdentification()
+}
+
+util.inherits( PendingConnection, events.EventEmitter )
 
 /**
  * Sends the identification message, consisting of this instance's uid
@@ -44,13 +44,13 @@ util.inherits( PendingConnection, events.EventEmitter );
  * @returns {void}
  */
 PendingConnection.prototype._sendIdentification = function() {
-	var identificationData = {
-		uid: this._messageConnector.getUid(),
-		securityToken: this._messageConnector.getSecurityToken()
-	};
-	
-	this._connection.send( MESSAGE.IDENTIFY + JSON.stringify( identificationData ) );
-};
+  var identificationData = {
+    uid: this._messageConnector.getUid(),
+    securityToken: this._messageConnector.getSecurityToken()
+  }
+
+  this._connection.send( MESSAGE.IDENTIFY + JSON.stringify( identificationData ) )
+}
 
 /**
  * Listener for messages that are received prior to authentication.
@@ -65,32 +65,32 @@ PendingConnection.prototype._sendIdentification = function() {
  * @returns {void}
  */
 PendingConnection.prototype._onMessage = function( msg ) {
-	if( msg.length < 2 ) {
-		this._reject( ERRORS.INVALID_MESSAGE );
-		return;
-	}
-	
-	var msgType = msg[ 0 ],
-		msgData = msg.substr( 1 );
-		
-	if( msgType === MESSAGE.IDENTIFY ) {
-		this._checkIdentification( msgData );
-	}
-	else if( msgType === MESSAGE.REJECT ) {
-		this._onRejected( msgData );
-	}
-	else if( msgType === MESSAGE.ERROR ) {
-		this._connection.emit( 'error', msgData );
-	}
-};
+  if( msg.length < 2 ) {
+    this._reject( ERRORS.INVALID_MESSAGE )
+    return
+  }
+
+  var msgType = msg[ 0 ],
+    msgData = msg.substr( 1 )
+
+  if( msgType === MESSAGE.IDENTIFY ) {
+    this._checkIdentification( msgData )
+  }
+  else if( msgType === MESSAGE.REJECT ) {
+    this._onRejected( msgData )
+  }
+  else if( msgType === MESSAGE.ERROR ) {
+    this._connection.emit( 'error', msgData )
+  }
+}
 
 /**
  * Checks the content of the identification message. The identification
  * message is a JSON string with the following structure
  *
  * {
- * 		securityToken: "<String>",
- * 		uid: "<String>"
+ *    securityToken: "<String>",
+ *    uid: "<String>"
  * }
  *
  * @param   {String} msg The JSON encoded indentification message
@@ -99,33 +99,33 @@ PendingConnection.prototype._onMessage = function( msg ) {
  * @returns {void}
  */
 PendingConnection.prototype._checkIdentification = function( msg ) {
-	var data;
-	
-	// Is the message parseable ?
-	try{
-		data = JSON.parse( msg );
-	} catch( e ) {
-		this._reject( ERRORS.MESSAGE_PARSE_ERROR );
-		return;
-	}
-	
-	// Is the securityToken the same as this instance's security token ?
-	if( data.securityToken !== this._messageConnector.getSecurityToken() ) {
-		this._reject( ERRORS.INVALID_SECURITY_TOKEN );
-		return;
-	}
-	
-	// Is this instance already connected to the remote instance
-	if( this._messageConnector.isConnectedToPeer( data.uid ) ) {
-		this._reject( ERRORS.DUPLICATE_CONNECTION );
-		return;
-	}
-	
-	// All good, open the connection
-	this._connection.remoteUid = data.uid;
-	this.emit( 'open', this._connection );
-	this._complete();
-};
+  var data
+
+  // Is the message parseable ?
+  try{
+    data = JSON.parse( msg )
+  } catch( e ) {
+    this._reject( ERRORS.MESSAGE_PARSE_ERROR )
+    return
+  }
+
+  // Is the securityToken the same as this instance's security token ?
+  if( data.securityToken !== this._messageConnector.getSecurityToken() ) {
+    this._reject( ERRORS.INVALID_SECURITY_TOKEN )
+    return
+  }
+
+  // Is this instance already connected to the remote instance
+  if( this._messageConnector.isConnectedToPeer( data.uid ) ) {
+    this._reject( ERRORS.DUPLICATE_CONNECTION )
+    return
+  }
+
+  // All good, open the connection
+  this._connection.remoteUid = data.uid
+  this.emit( 'open', this._connection )
+  this._complete()
+}
 
 /**
  * Rejects a message. This sends a rejection message to the remote
@@ -134,15 +134,15 @@ PendingConnection.prototype._checkIdentification = function( msg ) {
  * The rejection message will tell the remote instance that the connection
  * was closed on purpose and that it shouldn't try to reconnect
  *
- * @param   {String} reason 
+ * @param   {String} reason
  *
  * @private
  * @returns {void}
  */
 PendingConnection.prototype._reject = function( reason ) {
-	this._connection.send( MESSAGE.REJECT + reason );
-	setTimeout( this._destroyConnection.bind( this ), 20 );
-};
+  this._connection.send( MESSAGE.REJECT + reason )
+  setTimeout( this._destroyConnection.bind( this ), 20 )
+}
 
 /**
  * Destroys the connection and this class if it wasn't already destroyed
@@ -151,13 +151,13 @@ PendingConnection.prototype._reject = function( reason ) {
  * @returns {void}
  */
 PendingConnection.prototype._destroyConnection = function() {
-	if( !this._connection ) {
-		return;
-	}
-	
-	this._connection.destroy();
-	this._complete();
-};
+  if( !this._connection ) {
+    return
+  }
+
+  this._connection.destroy()
+  this._complete()
+}
 
 /**
  * Handler for received rejection messages. Emit's the rejection
@@ -169,16 +169,16 @@ PendingConnection.prototype._destroyConnection = function() {
  * @returns {void}
  */
 PendingConnection.prototype._onRejected = function( reason ) {
-	var msg = 'Connection to ' + this._connection.getRemoteUrl() + ' was rejected due to ' + reason;
+  var msg = 'Connection to ' + this._connection.getRemoteUrl() + ' was rejected due to ' + reason
 
-	if( reason !== ERRORS.DUPLICATE_CONNECTION ) {
-		this._messageConnector.emit( 'error', msg );
-	}
-	
-	this._connection.destroy();
-	this._connection.isRejected = true;
-	this._complete();
-};
+  if( reason !== ERRORS.DUPLICATE_CONNECTION ) {
+    this._messageConnector.emit( 'error', msg )
+  }
+
+  this._connection.destroy()
+  this._connection.isRejected = true
+  this._complete()
+}
 
 /**
  * Destroys this class. Removes all the listeners it previously attached
@@ -190,13 +190,13 @@ PendingConnection.prototype._onRejected = function( reason ) {
  * @returns {void}
  */
 PendingConnection.prototype._complete = function( connection ) {
-	clearTimeout( this._connectionTimeout );
-	this.removeAllListeners();
-	this._connection.removeListener( 'close', this._completeFn );
-	this._connection.removeListener( 'error', this._completeFn );
-	this._connection.removeListener( 'msg', this._onMessageFn );
-	this._connection = null;
-	this._messageConnector = null;
-};
+  clearTimeout( this._connectionTimeout )
+  this.removeAllListeners()
+  this._connection.removeListener( 'close', this._completeFn )
+  this._connection.removeListener( 'error', this._completeFn )
+  this._connection.removeListener( 'msg', this._onMessageFn )
+  this._connection = null
+  this._messageConnector = null
+}
 
-module.exports = PendingConnection;
+module.exports = PendingConnection

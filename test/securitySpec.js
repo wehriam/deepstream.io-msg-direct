@@ -1,64 +1,66 @@
-/* global describe, it, expect */
+/* global describe, it, expect, jasmine */
+const expect = require('chai').expect
+var MessageConnector = require( '../src/message-connector' )
 
-var MessageConnector = require( '../src/message-connector' );
+describe( 'security features work', () => {
+  var connectorA,
+    connectorB,
+    messageConnector
 
-describe( 'security features work', function(){
-	var connectorA,
-		connectorB;
-	
-	it( 'errors when no securityToken is provided', function(){
-		expect(function(){
-			new MessageConnector({
-				localport: 2007, 
-				localhost: 'localhost', 
-				remoteUrls: [ 'localhost:2008' ],
-				reconnectInterval: 100,
-				minimumRequiredConnections: 0
-			});
-		}).toThrow();	
-	});
-	
-	it( 'starts messageConnectorA', function( done ){
-		connectorA = new MessageConnector({
-			localport: 2007, 
-			localhost: 'localhost', 
-			remoteUrls: [ 'localhost:2008' ],
-			reconnectInterval: 100,
-			minimumRequiredConnections: 0,
-			securityToken: 'tokenA'
-		});
-		
-		connectorA.on( 'ready', done );
-		connectorA.on( 'error', function(){});
-	});
-	
-	it( 'rejects connector with different security token', function( done ) {
-	    connectorB = new MessageConnector({
-			localport: 2008, 
-			localhost: 'localhost', 
-			remoteUrls: [ 'localhost:2007' ],
-			reconnectInterval: 100,
-			minimumRequiredConnections: 1,
-			securityToken: 'tokenB'
-		});
-		
-		connectorB.on( 'ready', function() {
-		    expect( 'here' ).toBe( 'never called' );
-		});
-		
-		connectorB.on( 'error', function( error ){
-			expect( error.indexOf( 'INVALID_SECURITY_TOKEN' ) ).not.toBe( -1 );
-			done();
-		});
-	});
-	
-	it( 'destroyes connectorA', function(done) {
-		connectorA.on( 'close', done );
-	    connectorA.close();
-	});
-	
-	it( 'destroyes connectorB', function(done) {
-		connectorB.on( 'close', done );
-	    connectorB.close();
-	});
-});
+  it( 'errors when no securityToken is provided', () => {
+    expect(() => {
+      messageConnector = new MessageConnector({
+        localport: 2007,
+        localhost: 'localhost',
+        remoteUrls: [ 'localhost:2008' ],
+        reconnectInterval: 100,
+        minimumRequiredConnections: 0
+      })
+    }).to.throw()
+  })
+
+  it( 'starts messageConnectorA', ( done ) => {
+    connectorA = new MessageConnector({
+      localport: 2007,
+      localhost: 'localhost',
+      remoteUrls: [ 'localhost:2008' ],
+      reconnectInterval: 100,
+      minimumRequiredConnections: 0,
+      securityToken: 'tokenA'
+    })
+
+    connectorA.on( 'ready', done )
+    //TODO: Why does an error get thrown here?
+    connectorA.on( 'error', () => {} )
+  })
+
+  it( 'rejects connector with different security token', ( done ) => {
+    connectorB = new MessageConnector({
+      localport: 2008,
+      localhost: 'localhost',
+      remoteUrls: [ 'localhost:2007' ],
+      reconnectInterval: 100,
+      minimumRequiredConnections: 1,
+      securityToken: 'tokenB'
+    })
+
+    connectorB.on( 'ready', () => {
+      expect( 'here' ).to.equal( 'never called' )
+    })
+
+    connectorB.on( 'error', ( error ) => {
+      expect( error.indexOf( 'INVALID_SECURITY_TOKEN' ) ).not.to.equal( -1 )
+      done()
+    })
+  })
+
+  it( 'destroyes connectorA', (done) => {
+    connectorA.on( 'close', done )
+    connectorA.close()
+  })
+
+  it( 'destroyes connectorB', (done) => {
+    connectorB.on( 'close', done )
+    connectorB.close()
+  })
+})
