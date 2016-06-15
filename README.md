@@ -5,6 +5,21 @@ deepstream.io-msg-direct [![npm version](https://badge.fury.io/js/deepstream.io-
 
 
 ##Basic Setup
+```yaml
+plugins:
+  message:
+    name: direct
+    options:
+      localport: localPort
+      localhost: localHost
+      remoteUrls:
+        - localhost:remotePort1
+        - localhost:remotePort2
+      reconnectInterval: 100
+      securityToken: securityToken
+      minimumRequiredConnections: 0
+```
+
 ```javascript
 var Deepstream = require( 'deepstream.io' ),
     DirectMessageConnector = require( 'deepstream.io-msg-direct' ),
