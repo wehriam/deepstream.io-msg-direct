@@ -1,6 +1,8 @@
 deepstream.io-msg-direct [![npm version](https://badge.fury.io/js/deepstream.io-msg-direct.svg)](http://badge.fury.io/js/deepstream.io-msg-direct)
 ======================
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/deepstreamIO/deepstream.io-msg-direct.svg)](https://greenkeeper.io/)
+
 [deepstream](http://deepstream.io) message connector for direct tcp connections between all deepstream nodes
 
 
