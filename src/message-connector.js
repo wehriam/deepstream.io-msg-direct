@@ -229,7 +229,7 @@ MessageConnector.prototype._checkConfig = function() {
     throw new Error( 'Missing parameter \'localport\'' )
   }
 
-  if( typeof this._config.remoteUrls !== 'object' || this._config.remoteUrls.length === 0 ) {
+  if( typeof this._config.remoteUrls !== 'object' ) {
     throw new Error( 'Missing parameter \'remoteUrls\'' )
   }
 }
